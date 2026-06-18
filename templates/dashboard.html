@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Password Manager{% endblock %}
+
+{% block content %}
+<!-- KPI Summary Row -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card bg-gradient-primary text-white border-0 shadow rounded-4 p-3 h-100 transition-btn">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-white bg-opacity-25 p-3 me-3 text-center d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+                    <span class="fs-4">🔑</span>
+                </div>
+                <div>
+                    <h6 class="text-white text-opacity-75 mb-1 text-uppercase small fw-bold tracking-wider">Total Passwords</h6>
+                    <h2 class="mb-0 fw-bold font-outfit" id="kpiTotal">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3 mb-md-0">
+        <div class="card bg-gradient-success text-white border-0 shadow rounded-4 p-3 h-100 transition-btn">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-white bg-opacity-25 p-3 me-3 text-center d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+                    <span class="fs-4">🛡️</span>
+                </div>
+                <div>
+                    <h6 class="text-white text-opacity-75 mb-1 text-uppercase small fw-bold tracking-wider">Strong Passwords</h6>
+                    <h2 class="mb-0 fw-bold font-outfit" id="kpiStrong">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-gradient-danger text-white border-0 shadow rounded-4 p-3 h-100 transition-btn">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-white bg-opacity-25 p-3 me-3 text-center d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
+                    <span class="fs-4">⚠️</span>
+                </div>
+                <div>
+                    <h6 class="text-white text-opacity-75 mb-1 text-uppercase small fw-bold tracking-wider">Weak Passwords</h6>
+                    <h2 class="mb-0 fw-bold font-outfit" id="kpiWeak">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Warning if unlocked via recovery password -->
+{% if session.get('use_recovery') %}
+<div class="alert alert-danger shadow border-0 rounded-4 mb-4 d-flex align-items-center" role="alert">
+    <span class="fs-3 me-3">⚠️</span>
+    <div>
+        <h5 class="alert-heading fw-bold mb-1">Recovered Session Active</h5>
+        You have unlocked your vault using a recovery password. Please update your primary **Master Password** immediately in <a href="{{ url_for('settings_page') }}" class="alert-link">Settings</a> to restore standard password vault access.
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Left Panel: Password Generator -->
+    <div class="col-lg-5 mb-4">
+        <!-- Generate Password Section -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-primary text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">🔑 Generate Password</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="pwLength" class="form-label fw-semibold">Length</label>
+                    <div class="input-group">
+                        <input type="range" class="form-range" id="pwLength" min="4" max="128" value="16">
+                        <input type="number" class="form-control form-control-sm ms-2 rounded-3 text-center" id="pwLengthValue" value="16" style="width: 60px;">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="pwUpper" checked>
+                        <label class="form-check-label" for="pwUpper">Uppercase (A-Z)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="pwLower" checked>
+                        <label class="form-check-label" for="pwLower">Lowercase (a-z)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="pwDigits" checked>
+                        <label class="form-check-label" for="pwDigits">Digits (0-9)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="pwSymbols" checked>
+                        <label class="form-check-label" for="pwSymbols">Symbols (!@#$...)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="pwAmbiguous">
+                        <label class="form-check-label" for="pwAmbiguous">Exclude ambiguous (I, l, 1, O, 0)</label>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary w-100 py-2 rounded-3 fw-bold transition-btn" id="generatePwBtn">Generate</button>
+                
+                <div id="pwResult" class="mt-3" style="display: none;">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control font-monospace" id="generatedPassword" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyPwBtn" title="Copy to clipboard">
+                            📋 Copy
+                        </button>
+                    </div>
+                    <small id="pwStrength" class="d-block mb-2"></small>
+                    <button type="button" class="btn btn-sm btn-success w-100 py-2 rounded-3 fw-bold transition-btn" id="savePwBtn">💾 Save to Vault</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generate Passphrase Section -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-info text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">🗝️ Generate Passphrase</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="phraseWords" class="form-label fw-semibold">Number of Words</label>
+                    <input type="number" class="form-control rounded-3" id="phraseWords" min="3" max="10" value="4">
+                </div>
+                <div class="mb-3">
+                    <label for="phraseSeparator" class="form-label fw-semibold">Separator</label>
+                    <input type="text" class="form-control rounded-3" id="phraseSeparator" value="-" maxlength="1">
+                </div>
+                
+                <button type="button" class="btn btn-info w-100 py-2 rounded-3 fw-bold transition-btn text-white" id="generatePhraseBtn">Generate</button>
+                
+                <div id="phraseResult" class="mt-3" style="display: none;">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control font-monospace" id="generatedPhrase" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyPhraseBtn" title="Copy to clipboard">
+                            📋 Copy
+                        </button>
+                    </div>
+                    <small id="phraseStrength" class="d-block"></small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Check Password Strength Section -->
+        <div class="card border-0 shadow rounded-4">
+            <div class="card-header bg-warning text-dark rounded-top-4">
+                <h5 class="mb-0 fw-bold">⚡ Check Strength</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="checkPassword" class="form-label fw-semibold">Password</label>
+                    <input type="text" class="form-control rounded-3" id="checkPassword" placeholder="Enter password to check...">
+                </div>
+                
+                <div id="checkResult" class="mt-3" style="display: none;">
+                    <div class="mb-2">
+                        <strong>Strength:</strong> <span id="checkStrengthLabel"></span>
+                    </div>
+                    <div class="mb-2">
+                        <div class="progress rounded-3" style="height: 1.5rem;">
+                            <div id="checkStrengthBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="checkFeedback"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Panel: Vault Manager -->
+    <div class="col-lg-7 mb-4">
+        <!-- Add Entry Section -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-success text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">➕ Add Entry</h5>
+            </div>
+            <div class="card-body">
+                <form id="addEntryForm">
+                    <div class="mb-3">
+                        <label for="addSite" class="form-label fw-semibold">Site/Service</label>
+                        <input type="text" class="form-control rounded-3" id="addSite" required placeholder="example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addUsername" class="form-label fw-semibold">Username/Email</label>
+                        <input type="text" class="form-control rounded-3" id="addUsername" required placeholder="user@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addPassword" class="form-label fw-semibold">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="addPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleAddPasswordBtn">👁️</button>
+                            <button class="btn btn-outline-secondary" type="button" id="genAddPasswordBtn">⚡ Generate</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addNotes" class="form-label fw-semibold">Notes (optional)</label>
+                        <textarea class="form-control rounded-3" id="addNotes" rows="2" placeholder="Account recovery tokens, security questions, etc."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-2 rounded-3 fw-bold transition-btn">Save Entry</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- List Entries Section -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center rounded-top-4">
+                <h5 class="mb-0 fw-bold">📋 Your Entries</h5>
+                <button class="btn btn-sm btn-light rounded-3 px-3 fw-semibold transition-btn" id="refreshListBtn">🔄 Refresh</button>
+            </div>
+            <!-- Search Bar inside list card -->
+            <div class="p-3 border-bottom bg-light">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">🔍</span>
+                    <input type="text" class="form-control border-start-0 py-2" id="searchEntries" placeholder="Search entries by site or username...">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="entriesList" style="max-height: 450px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <!-- Activity Log Section -->
+        <div class="card border-0 shadow rounded-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center rounded-top-4">
+                <h5 class="mb-0 fw-bold">📊 Recent Activity Log</h5>
+                <button class="btn btn-sm btn-light rounded-3 px-3 fw-semibold transition-btn" id="refreshActivityBtn">🔄 Refresh</button>
+            </div>
+            <div class="card-body">
+                <div id="activityLogList" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                    <div class="text-center text-muted p-3">Loading activity logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Entry Modal -->
+<div class="modal fade" id="viewEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom-0 p-4 pb-0">
+                <h5 class="modal-title font-outfit fw-bold fs-4" id="viewEntryTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <strong class="text-muted small d-block mb-1">Username / Email</strong>
+                    <span id="viewEntryUsername" class="fs-5 fw-medium"></span>
+                </div>
+                <div class="mb-3">
+                    <strong class="text-muted small d-block mb-1">Password</strong>
+                    <div class="input-group">
+                        <input type="password" class="form-control font-monospace py-2" id="viewEntryPassword" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyViewPasswordBtn">📋 Copy</button>
+                        <button class="btn btn-outline-secondary" type="button" id="toggleViewPasswordBtn">👁️</button>
+                    </div>
+                </div>
+                <div id="viewEntryNotes" class="mb-3" style="display: none;">
+                    <strong class="text-muted small d-block mb-1">Notes</strong>
+                    <div class="bg-light p-3 rounded-3 small text-secondary" style="white-space: pre-wrap;" id="viewEntryNotesText"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 p-4 pt-0 justify-content-between">
+                <button type="button" class="btn btn-danger px-4 rounded-3 fw-bold" id="deleteEntryBtn">🗑️ Delete</button>
+                <button type="button" class="btn btn-secondary px-4 rounded-3 fw-bold" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom-0 p-4 pb-0">
+                <h5 class="modal-title font-outfit fw-bold fs-4 text-danger">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="fs-1 text-danger mb-3">⚠️</div>
+                <p class="fs-5">Are you sure you want to delete the entry for <strong id="deleteConfirmSite"></strong>?</p>
+                <p class="text-muted small">This action is permanent and cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-top-0 p-4 pt-0 justify-content-center">
+                <button type="button" class="btn btn-secondary px-4 rounded-3 fw-bold me-2" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger px-4 rounded-3 fw-bold" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Generated Password Modal -->
+<div class="modal fade" id="saveGenPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom-0 p-4 pb-0">
+                <h5 class="modal-title font-outfit fw-bold fs-4">Save Generated Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="saveGenPasswordForm">
+                    <div class="mb-3">
+                        <label for="saveGenSite" class="form-label fw-semibold">Site/Service</label>
+                        <input type="text" class="form-control rounded-3" id="saveGenSite" required placeholder="example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saveGenUsername" class="form-label fw-semibold">Username/Email</label>
+                        <input type="text" class="form-control rounded-3" id="saveGenUsername" required placeholder="user@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saveGenNotes" class="form-label fw-semibold">Notes (optional)</label>
+                        <textarea class="form-control rounded-3" id="saveGenNotes" rows="2" placeholder="Additional details..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 p-4 pt-0">
+                <button type="button" class="btn btn-secondary px-4 rounded-3 fw-bold me-2" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4 rounded-3 fw-bold" id="confirmSaveGenPasswordBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global state
+let currentViewEntryId = null;
+let currentDeleteSite = null;
+let currentDeleteUsername = null;
+let savedGeneratedPassword = null;
+let allEntries = []; // Cache loaded entries for quick local searches and KPIs
+
+// Password length slider sync
+document.getElementById('pwLength').addEventListener('input', function() {
+    document.getElementById('pwLengthValue').value = this.value;
+});
+document.getElementById('pwLengthValue').addEventListener('change', function() {
+    document.getElementById('pwLength').value = this.value;
+});
+
+// Generate Password
+document.getElementById('generatePwBtn').addEventListener('click', async function() {
+    const length = parseInt(document.getElementById('pwLength').value);
+    const useUpper = document.getElementById('pwUpper').checked;
+    const useLower = document.getElementById('pwLower').checked;
+    const useDigits = document.getElementById('pwDigits').checked;
+    const useSymbols = document.getElementById('pwSymbols').checked;
+    const excludeAmbiguous = document.getElementById('pwAmbiguous').checked;
+    
+    try {
+        const response = await fetch(`/api/password/generate?length=${length}&use_upper=${useUpper}&use_lower=${useLower}&use_digits=${useDigits}&use_symbols=${useSymbols}&exclude_ambiguous=${excludeAmbiguous}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('generatedPassword').value = data.password;
+            savedGeneratedPassword = data.password;
+            displayStrength(data.strength, 'pwStrength');
+            document.getElementById('pwResult').style.display = 'block';
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error generating password: ' + error.message, 'danger');
+    }
+});
+
+// Copy password to clipboard
+document.getElementById('copyPwBtn').addEventListener('click', function() {
+    copyToClipboard(document.getElementById('generatedPassword'));
+});
+
+// Save generated password to vault
+document.getElementById('savePwBtn').addEventListener('click', function() {
+    const modal = new bootstrap.Modal(document.getElementById('saveGenPasswordModal'));
+    modal.show();
+});
+
+// Confirm save generated password
+document.getElementById('confirmSaveGenPasswordBtn').addEventListener('click', async function() {
+    const site = document.getElementById('saveGenSite').value;
+    const username = document.getElementById('saveGenUsername').value;
+    const notes = document.getElementById('saveGenNotes').value;
+    
+    if (!site || !username) {
+        showAlert('Site and username are required!', 'danger');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/vault/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                site: site,
+                username: username,
+                password: savedGeneratedPassword,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Entry saved successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('saveGenPasswordModal')).hide();
+            document.getElementById('saveGenPasswordForm').reset();
+            loadEntries();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Generate Passphrase
+document.getElementById('generatePhraseBtn').addEventListener('click', async function() {
+    const numWords = parseInt(document.getElementById('phraseWords').value);
+    const separator = document.getElementById('phraseSeparator').value;
+    
+    try {
+        const response = await fetch(`/api/password/passphrase?num_words=${numWords}&separator=${separator}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('generatedPhrase').value = data.passphrase;
+            displayStrength(data.strength, 'phraseStrength');
+            document.getElementById('phraseResult').style.display = 'block';
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Copy passphrase to clipboard
+document.getElementById('copyPhraseBtn').addEventListener('click', function() {
+    copyToClipboard(document.getElementById('generatedPhrase'));
+});
+
+// Check Password Strength
+document.getElementById('checkPassword').addEventListener('input', async function() {
+    const password = this.value;
+    if (!password) {
+        document.getElementById('checkResult').style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/password/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById('checkStrengthLabel').textContent = data.label;
+            const percentage = (data.score / data.max_score) * 100;
+            const bar = document.getElementById('checkStrengthBar');
+            bar.style.width = percentage + '%';
+            bar.className = 'progress-bar ' + getStrengthClass(data.label);
+            
+            const feedbackHtml = data.feedback.map(f => `<div class="small">• ${f}</div>`).join('');
+            document.getElementById('checkFeedback').innerHTML = feedbackHtml;
+            document.getElementById('checkResult').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+});
+
+// Add Entry
+document.getElementById('addEntryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const site = document.getElementById('addSite').value;
+    const username = document.getElementById('addUsername').value;
+    const password = document.getElementById('addPassword').value;
+    const notes = document.getElementById('addNotes').value;
+    
+    try {
+        const response = await fetch('/api/vault/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                site: site,
+                username: username,
+                password: password,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Entry added successfully!', 'success');
+            this.reset();
+            loadEntries();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Generate password for add entry form
+document.getElementById('genAddPasswordBtn').addEventListener('click', async function() {
+    try {
+        const response = await fetch('/api/password/generate?length=16');
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById('addPassword').value = data.password;
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Toggle password visibility
+document.getElementById('toggleAddPasswordBtn').addEventListener('click', function() {
+    const field = document.getElementById('addPassword');
+    field.type = field.type === 'password' ? 'text' : 'password';
+});
+
+// Load and display entries
+async function loadEntries() {
+    try {
+        const response = await fetch('/api/vault/list');
+        const data = await response.json();
+        
+        if (response.ok) {
+            allEntries = data.entries;
+            updateKPIs(allEntries);
+            filterAndDisplayEntries(document.getElementById('searchEntries').value);
+            loadActivity();
+        } else {
+            showAlert(data.error || 'Failed to load entries', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Update KPI Metrics Card Counters
+function updateKPIs(entries) {
+    const total = entries.length;
+    // Strong is score 4, 5, or 6
+    const strong = entries.filter(e => e.strength_score !== null && e.strength_score >= 4).length;
+    // Weak is score 0, 1, or 2
+    const weak = entries.filter(e => e.strength_score !== null && e.strength_score <= 2).length;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiStrong').textContent = strong;
+    document.getElementById('kpiWeak').textContent = weak;
+}
+
+// Search filtering and rendering in real-time
+function filterAndDisplayEntries(query) {
+    const q = query.toLowerCase().trim();
+    const filtered = allEntries.filter(entry => {
+        return entry.site.toLowerCase().includes(q) || 
+               (entry.username && entry.username.toLowerCase().includes(q));
+    });
+
+    const entriesList = document.getElementById('entriesList');
+    if (filtered.length === 0) {
+        entriesList.innerHTML = `<div class="p-4 text-muted text-center">${query ? 'No matching entries found.' : 'No entries yet. Add one above!'}</div>`;
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover mb-0"><tbody>';
+    for (const entry of filtered) {
+        // Compute indicator dot color based on strength score
+        let dotColor = 'bg-secondary';
+        let strengthTitle = 'Unknown strength';
+        if (entry.strength_score !== null) {
+            if (entry.strength_score >= 4) {
+                dotColor = 'bg-success';
+                strengthTitle = 'Strong Password';
+            } else if (entry.strength_score >= 3) {
+                dotColor = 'bg-warning';
+                strengthTitle = 'Good/Fair Password';
+            } else {
+                dotColor = 'bg-danger';
+                strengthTitle = 'Weak Password';
+            }
+        }
+        
+        html += `
+            <tr style="cursor: pointer;" onclick="viewEntry('${entry.site}', '${entry.username || ''}')">
+                <td>
+                    <span class="d-inline-block rounded-circle ${dotColor} me-2" style="width: 10px; height: 10px;" title="${strengthTitle}"></span>
+                    <strong>${escapeHtml(entry.site)}</strong>
+                </td>
+                <td>${escapeHtml(entry.username || '')}</td>
+                <td class="text-muted small">${escapeHtml(entry.notes || '')}</td>
+            </tr>
+        `;
+    }
+    html += '</tbody></table></div>';
+    entriesList.innerHTML = html;
+}
+
+// View entry details
+async function viewEntry(site, username) {
+    try {
+        const response = await fetch(`/api/vault/get/${encodeURIComponent(site)}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            const entry = data.entries.find(e => e.username === username) || data.entries[0];
+            currentViewEntryId = entry.id;
+            currentDeleteSite = site;
+            currentDeleteUsername = username;
+            
+            document.getElementById('viewEntryTitle').textContent = site;
+            document.getElementById('viewEntryUsername').textContent = entry.username || '(none)';
+            document.getElementById('viewEntryPassword').value = entry.password;
+            
+            if (entry.notes) {
+                document.getElementById('viewEntryNotes').style.display = 'block';
+                document.getElementById('viewEntryNotesText').textContent = entry.notes;
+            } else {
+                document.getElementById('viewEntryNotes').style.display = 'none';
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('viewEntryModal'));
+            modal.show();
+            // Reload logs since viewed entry logs it
+            loadActivity();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Copy password from view modal
+document.getElementById('copyViewPasswordBtn').addEventListener('click', function() {
+    copyToClipboard(document.getElementById('viewEntryPassword'));
+});
+
+// Toggle password visibility in view modal
+document.getElementById('toggleViewPasswordBtn').addEventListener('click', function() {
+    const field = document.getElementById('viewEntryPassword');
+    field.type = field.type === 'password' ? 'text' : 'password';
+});
+
+// Delete entry click
+document.getElementById('deleteEntryBtn').addEventListener('click', function() {
+    bootstrap.Modal.getInstance(document.getElementById('viewEntryModal')).hide();
+    document.getElementById('deleteConfirmSite').textContent = currentDeleteSite;
+    const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+    modal.show();
+});
+
+// Confirm delete click
+document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    try {
+        const response = await fetch(`/api/vault/delete/${encodeURIComponent(currentDeleteSite)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentDeleteUsername })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Entry deleted successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
+            loadEntries();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+
+// Load recent activity logs
+async function loadActivity() {
+    try {
+        const response = await fetch('/api/activity/list?limit=15');
+        const data = await response.json();
+        if (response.ok) {
+            const listDiv = document.getElementById('activityLogList');
+            if (data.logs.length === 0) {
+                listDiv.innerHTML = '<div class="text-center text-muted p-3">No activity logged yet.</div>';
+            } else {
+                let html = '<div class="timeline">';
+                for (const log of data.logs) {
+                    // Normalize space in sqlite timestamp to ISO standard T
+                    const normalizedTime = log.timestamp.replace(' ', 'T');
+                    const date = new Date(normalizedTime);
+                    const timeStr = date.toLocaleString();
+                    
+                    let badgeColor = 'bg-secondary';
+                    if (log.action.includes('Unlocked')) badgeColor = 'bg-success';
+                    else if (log.action.includes('Created')) badgeColor = 'bg-primary';
+                    else if (log.action.includes('Deleted')) badgeColor = 'bg-danger';
+                    else if (log.action.includes('Decrypted')) badgeColor = 'bg-info text-dark';
+                    else if (log.action.includes('Changed')) badgeColor = 'bg-warning text-dark';
+                    
+                    html += `
+                        <div class="timeline-item mb-2">
+                            <div class="timeline-badge" style="background-color: ${log.action.includes('Deleted') ? '#dc3545' : (log.action.includes('Unlocked') ? '#198754' : '#0d6efd')};"></div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge ${badgeColor} py-1 px-2" style="font-size: 0.75rem;">${escapeHtml(log.action)}</span>
+                                <small class="text-muted" style="font-size: 0.7rem;">${timeStr}</small>
+                            </div>
+                            <div class="text-secondary small font-outfit" style="font-size: 0.82rem; padding-left: 2px;">${escapeHtml(log.details)}</div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                listDiv.innerHTML = html;
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load activity logs:", error);
+    }
+}
+
+// Search Input dynamic filter listener
+document.getElementById('searchEntries').addEventListener('input', function() {
+    filterAndDisplayEntries(this.value);
+});
+
+// Refresh buttons
+document.getElementById('refreshListBtn').addEventListener('click', loadEntries);
+document.getElementById('refreshActivityBtn').addEventListener('click', loadActivity);
+
+// Init on DOM load
+document.addEventListener('DOMContentLoaded', loadEntries);
+</script>
+{% endblock %}

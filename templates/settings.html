@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Password Manager{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 font-outfit fw-bold">Settings</h1>
+
+<div class="row">
+    <!-- Left Column: Master Password Management -->
+    <div class="col-md-6">
+        {% if session.get('use_recovery') %}
+        <!-- Reset Master Password (when logged in via Recovery) -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-danger text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">🔑 Reset Master Password</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-danger small mb-3">
+                    ⚠️ You unlocked this session using your recovery password. You must configure a new primary master password below to restore normal access.
+                </p>
+                <form id="resetPrimaryForm">
+                    <div class="mb-3">
+                        <label for="recoveryPasswordReset" class="form-label fw-semibold">Current Recovery Password</label>
+                        <input type="password" class="form-control rounded-3" id="recoveryPasswordReset" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPrimaryPassword" class="form-label fw-semibold">New Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="newPrimaryPassword" required minlength="8">
+                        <small class="form-text text-muted">Use at least 8 characters. 12+ recommended.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmNewPrimaryPassword" class="form-label fw-semibold">Confirm New Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="confirmNewPrimaryPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 py-2 rounded-3 fw-bold transition-btn">Reset Master Password</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <!-- Standard Change Master Password -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-danger text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">🔑 Change Master Password</h5>
+            </div>
+            <div class="card-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label fw-semibold">Current Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label fw-semibold">New Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="newPassword" required minlength="8">
+                        <small class="form-text text-muted">Use at least 8 characters. 12+ recommended.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmNewPassword" class="form-label fw-semibold">Confirm New Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="confirmNewPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 py-2 rounded-3 fw-bold transition-btn">Change Password</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Session Info -->
+        <div class="card border-0 shadow rounded-4 mb-4">
+            <div class="card-header bg-secondary text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">ℹ️ Session Info</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Status:</strong> 
+                    {% if session.get('use_recovery') %}
+                        <span class="badge bg-warning text-dark">Unlocked via Recovery</span>
+                    {% else %}
+                        <span class="badge bg-success">Unlocked (Standard)</span>
+                    {% endif %}
+                </p>
+                <p class="mb-0">
+                    <small class="text-muted">Your session will expire after 30 minutes of inactivity.</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Recovery Password Configuration & Export -->
+    <div class="col-md-6">
+        {% if not session.get('use_recovery') %}
+        <!-- Setup / Update Recovery Password -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-warning text-dark rounded-top-4">
+                <h5 class="mb-0 fw-bold">🛡️ Recovery Password</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Configure a secondary recovery password. If you ever lose your primary master password, you can use this recovery password to unlock your database and establish a new master password.
+                </p>
+                <form id="setRecoveryForm">
+                    <div class="mb-3">
+                        <label for="recoveryMasterPassword" class="form-label fw-semibold">Verify Primary Master Password</label>
+                        <input type="password" class="form-control rounded-3" id="recoveryMasterPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newRecoveryPassword" class="form-label fw-semibold">New Recovery Password</label>
+                        <input type="password" class="form-control rounded-3" id="newRecoveryPassword" required minlength="8">
+                        <small class="form-text text-muted">Must be at least 8 characters. Make it different from your primary password.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmRecoveryPassword" class="form-label fw-semibold">Confirm Recovery Password</label>
+                        <input type="password" class="form-control rounded-3" id="confirmRecoveryPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 py-2 rounded-3 fw-bold transition-btn text-dark">Configure Recovery Password</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Export Vault -->
+        <div class="card mb-4 border-0 shadow rounded-4">
+            <div class="card-header bg-info text-white rounded-top-4">
+                <h5 class="mb-0 fw-bold">💾 Export Vault</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Download an encrypted backup of your entire vault as a JSON file. 
+                    Keep it safe — this file contains all your passwords encrypted with your master password.
+                </p>
+                <button type="button" class="btn btn-info w-100 py-2 rounded-3 fw-bold text-white transition-btn" id="exportVaultBtn">
+                    📥 Download Backup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Standard Change Master Password Form
+const changePasswordForm = document.getElementById('changePasswordForm');
+if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        
+        if (newPassword !== confirmNewPassword) {
+            showAlert('New passwords do not match!', 'danger');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/settings/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    old_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmNewPassword
+                })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                showAlert('Master password changed successfully! Your vault key was updated.', 'success');
+                this.reset();
+            } else {
+                showAlert(data.error || 'Failed to change password', 'danger');
+            }
+        } catch (error) {
+            showAlert('Error: ' + error.message, 'danger');
+        }
+    });
+}
+
+// Reset Master Password (when logged in via Recovery)
+const resetPrimaryForm = document.getElementById('resetPrimaryForm');
+if (resetPrimaryForm) {
+    resetPrimaryForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const recoveryPassword = document.getElementById('recoveryPasswordReset').value;
+        const newPassword = document.getElementById('newPrimaryPassword').value;
+        const confirmPassword = document.getElementById('confirmNewPrimaryPassword').value;
+        
+        if (newPassword !== confirmPassword) {
+            showAlert('New passwords do not match!', 'danger');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/settings/reset-primary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recovery_password: recoveryPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword
+                })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                showAlert('Master password reset successfully! Session switched back to primary.', 'success');
+                setTimeout(() => window.location.href = '/settings', 1500);
+            } else {
+                showAlert(data.error || 'Failed to reset password', 'danger');
+            }
+        } catch (error) {
+            showAlert('Error: ' + error.message, 'danger');
+        }
+    });
+}
+
+// Set / Configure Recovery Password Form
+const setRecoveryForm = document.getElementById('setRecoveryForm');
+if (setRecoveryForm) {
+    setRecoveryForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const masterPassword = document.getElementById('recoveryMasterPassword').value;
+        const recoveryPassword = document.getElementById('newRecoveryPassword').value;
+        const confirmRecovery = document.getElementById('confirmRecoveryPassword').value;
+        
+        if (recoveryPassword !== confirmRecovery) {
+            showAlert('Recovery passwords do not match!', 'danger');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/settings/set-recovery-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    master_password: masterPassword,
+                    recovery_password: recoveryPassword,
+                    confirm_recovery: confirmRecovery
+                })
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                showAlert('Recovery password configured successfully!', 'success');
+                this.reset();
+            } else {
+                showAlert(data.error || 'Failed to configure recovery password', 'danger');
+            }
+        } catch (error) {
+            showAlert('Error: ' + error.message, 'danger');
+        }
+    });
+}
+
+// Export Vault Backup
+document.getElementById('exportVaultBtn').addEventListener('click', async function() {
+    try {
+        const response = await fetch('/api/vault/export');
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vault_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showAlert('Vault exported successfully!', 'success');
+        } else {
+            const data = await response.json();
+            showAlert(data.error || 'Failed to export vault', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+});
+</script>
+{% endblock %}

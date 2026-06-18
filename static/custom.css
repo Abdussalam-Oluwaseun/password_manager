@@ -1,0 +1,442 @@
+/**
+ * custom.css
+ * Custom styling and Bootstrap enhancements for the password manager UI.
+ */
+
+:root {
+    --bs-primary-rgb: 13, 110, 253;
+    --bs-success-rgb: 25, 135, 84;
+    --bs-danger-rgb: 220, 53, 69;
+    --bs-warning-rgb: 255, 193, 7;
+    --bs-info-rgb: 23, 162, 184;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ========================================================================== */
+/* Navigation & Header */
+/* ========================================================================== */
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+/* ========================================================================== */
+/* Cards & Containers */
+/* ========================================================================== */
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ========================================================================== */
+/* Forms & Inputs */
+/* ========================================================================== */
+
+.form-control,
+.form-select,
+.input-group-text {
+    border-radius: 0.4rem;
+    border: 1px solid #dee2e6;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+/* ========================================================================== */
+/* Buttons */
+/* ========================================================================== */
+
+.btn {
+    border-radius: 0.4rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+/* ========================================================================== */
+/* Alerts & Messages */
+/* ========================================================================== */
+
+.alert {
+    border: none;
+    border-radius: 0.4rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border-color: #badbcc;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #842029;
+    border-color: #f5c2c7;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #664d03;
+    border-color: #ffecb5;
+}
+
+.alert-info {
+    background-color: #cfe2ff;
+    color: #084298;
+    border-color: #b6d4fe;
+}
+
+/* ========================================================================== */
+/* Progress Bars */
+/* ========================================================================== */
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* ========================================================================== */
+/* Tables */
+/* ========================================================================== */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.table-responsive {
+    border-radius: 0.4rem;
+}
+
+/* ========================================================================== */
+/* Input Groups */
+/* ========================================================================== */
+
+.input-group {
+    border-radius: 0.4rem;
+    overflow: hidden;
+}
+
+.input-group .form-control {
+    border-radius: 0.4rem 0 0 0.4rem;
+}
+
+.input-group .btn {
+    border-radius: 0 0.4rem 0.4rem 0;
+}
+
+/* ========================================================================== */
+/* Modals */
+/* ========================================================================== */
+
+.modal-content {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+/* ========================================================================== */
+/* Badges & Labels */
+/* ========================================================================== */
+
+.badge {
+    border-radius: 0.25rem;
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* ========================================================================== */
+/* Utility Classes */
+/* ========================================================================== */
+
+.font-monospace {
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.05em;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.small {
+    font-size: 0.875rem;
+}
+
+.shadow {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========================================================================== */
+/* Responsive Design */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+    main {
+        padding-top: 0.5rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* ========================================================================== */
+/* Accessibility */
+/* ========================================================================== */
+
+a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #0b5ed7;
+    text-decoration: underline;
+}
+
+button:focus,
+a:focus,
+input:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* ========================================================================== */
+/* Loading & Animation */
+/* ========================================================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal.show {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ========================================================================== */
+/* Scrollbars */
+/* ========================================================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ========================================================================== */
+/* Custom Gradient Cards & KPIs */
+/* ========================================================================== */
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.transition-btn {
+    transition: all 0.2s ease;
+}
+.transition-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.font-outfit {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Activity Log timeline styles */
+.timeline-item {
+    border-left: 2px solid #e5e7eb;
+    padding-left: 1rem;
+    position: relative;
+    margin-bottom: 1.25rem;
+}
+.timeline-item:last-child {
+    border-left: none;
+    margin-bottom: 0;
+}
+.timeline-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    position: absolute;
+    left: -7px;
+    top: 5px;
+}
+

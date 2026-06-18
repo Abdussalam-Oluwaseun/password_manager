@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Password Manager - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        {% if vault_exists %}
+            <!-- Unlock Vault Form -->
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h2 class="card-title text-center mb-4 font-outfit fw-bold" id="unlockTitle">🔓 Unlock Vault</h2>
+                    <form id="unlockForm">
+                        <div class="mb-3">
+                            <label for="masterPassword" class="form-label fw-semibold" id="passwordLabel">Master Password</label>
+                            <input type="password" class="form-control rounded-3 py-2" id="masterPassword" name="master_password" required>
+                            <small class="form-text text-muted" id="passwordHelp">Enter your master password to access your vault.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold mb-3 transition-btn" id="unlockSubmitBtn">Unlock</button>
+                        <div class="text-center">
+                            <a href="#" class="text-decoration-none small text-danger fw-semibold" id="toggleRecoveryLink">Lost your master password? Unlock with Recovery Password</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <!-- Initialize Vault Form -->
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h2 class="card-title text-center mb-4 font-outfit fw-bold">🆕 Create New Vault</h2>
+                    <p class="text-center text-muted mb-4">
+                        Set up a new password vault. Choose a strong master password — it cannot be recovered if lost.
+                    </p>
+                    <form id="initForm">
+                        <div class="mb-3">
+                            <label for="masterPassword" class="form-label fw-semibold">Master Password</label>
+                            <input type="password" class="form-control rounded-3 py-2" id="masterPassword" name="master_password" required minlength="8">
+                            <small class="form-text text-muted">Use at least 8 characters. 12+ recommended.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label fw-semibold">Confirm Master Password</label>
+                            <input type="password" class="form-control rounded-3 py-2" id="confirmPassword" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 py-2 rounded-3 fw-bold transition-btn">Create Vault</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const initForm = document.getElementById('initForm');
+    const unlockForm = document.getElementById('unlockForm');
+    
+    if (initForm) {
+        initForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const masterPassword = document.getElementById('masterPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            try {
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        master_password: masterPassword,
+                        confirm_password: confirmPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Vault created! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/dashboard', 1500);
+                } else {
+                    showAlert(data.error || 'Failed to create vault', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'danger');
+            }
+        });
+    }
+    
+    if (unlockForm) {
+        let useRecovery = false;
+        const toggleRecoveryLink = document.getElementById('toggleRecoveryLink');
+        const unlockTitle = document.getElementById('unlockTitle');
+        const passwordLabel = document.getElementById('passwordLabel');
+        const passwordHelp = document.getElementById('passwordHelp');
+        const unlockSubmitBtn = document.getElementById('unlockSubmitBtn');
+
+        if (toggleRecoveryLink) {
+            toggleRecoveryLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                useRecovery = !useRecovery;
+                if (useRecovery) {
+                    unlockTitle.textContent = '🛡️ Unlock with Recovery';
+                    passwordLabel.textContent = 'Recovery Password';
+                    passwordHelp.textContent = 'Enter your recovery password to unlock your vault.';
+                    unlockSubmitBtn.textContent = 'Unlock with Recovery';
+                    unlockSubmitBtn.className = 'btn btn-danger w-100 py-2 rounded-3 fw-bold mb-3 transition-btn';
+                    toggleRecoveryLink.textContent = 'Back to Master Password login';
+                } else {
+                    unlockTitle.textContent = '🔓 Unlock Vault';
+                    passwordLabel.textContent = 'Master Password';
+                    passwordHelp.textContent = 'Enter your master password to access your vault.';
+                    unlockSubmitBtn.textContent = 'Unlock';
+                    unlockSubmitBtn.className = 'btn btn-primary w-100 py-2 rounded-3 fw-bold mb-3 transition-btn';
+                    toggleRecoveryLink.textContent = 'Lost your master password? Unlock with Recovery Password';
+                }
+            });
+        }
+
+        unlockForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const masterPassword = document.getElementById('masterPassword').value;
+            
+            try {
+                const response = await fetch('/api/unlock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        master_password: masterPassword,
+                        use_recovery: useRecovery
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Vault unlocked! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/dashboard', 1500);
+                } else {
+                    showAlert(data.error || 'Failed to unlock vault', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'danger');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
