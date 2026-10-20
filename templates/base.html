@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,55 +13,104 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='custom.css') }}">
     
     {% block extra_css %}{% endblock %}
+    
+    <!-- Theme Flash Prevention -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <strong>🔐 Password Manager</strong>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    {% if session.get('master_password') %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('settings_page') }}">Settings</a>
-                        </li>
-                        <li class="nav-item">
-                            <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
-                        </li>
-                    {% endif %}
-                </ul>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Top Header -->
+    <header class="top-header navbar navbar-expand-lg border-bottom px-3 sticky-top">
+        <div class="container-fluid d-flex align-items-center justify-content-between p-0">
+            <div class="d-flex align-items-center gap-3">
+                {% if session.get('master_password') %}
+                    <button class="btn btn-icon sidebar-toggle-btn d-lg-none" id="sidebarToggle" aria-label="Toggle Sidebar">
+                        <i data-lucide="menu"></i>
+                    </button>
+                {% endif %}
+                <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+                    <i data-lucide="shield-check" class="text-primary-accent" style="width: 28px; height: 28px;"></i>
+                    <span class="font-outfit fw-bold tracking-tight">VaultGuard</span>
+                </a>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Theme Toggle Button -->
+                <button class="btn btn-icon theme-toggle-btn" id="themeToggle" title="Toggle Theme" aria-label="Toggle Theme">
+                    <i data-lucide="sun" class="sun-icon"></i>
+                    <i data-lucide="moon" class="moon-icon"></i>
+                </button>
+                
+                {% if session.get('master_password') %}
+                    <button class="btn btn-logout d-flex align-items-center gap-2" id="logoutBtn">
+                        <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                        <span class="d-none d-sm-inline">Lock Vault</span>
+                    </button>
+                {% endif %}
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Flash Messages -->
-    <div class="container mt-3">
-        <div id="alertContainer"></div>
+    <div class="app-layout flex-grow-1 d-flex">
+        <!-- Sidebar Navigation -->
+        {% if session.get('master_password') %}
+            <nav class="app-sidebar border-end" id="appSidebar">
+                <div class="sidebar-content d-flex flex-column justify-content-between h-100 p-3">
+                    <ul class="nav nav-pills flex-column gap-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-3 {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-3 {% if request.path == '/vault' %}active{% endif %}" href="{{ url_for('vault_page') }}">
+                                <i data-lucide="key-round" style="width: 18px; height: 18px;"></i>
+                                <span>My Passwords</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-3 {% if request.path == '/generator' %}active{% endif %}" href="{{ url_for('generator_page') }}">
+                                <i data-lucide="dices" style="width: 18px; height: 18px;"></i>
+                                <span>Generator</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-3 {% if request.path == '/settings' %}active{% endif %}" href="{{ url_for('settings_page') }}">
+                                <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                                <span>Settings & Security</span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="sidebar-footer pt-3 border-top text-center text-muted small">
+                        <span class="d-block">VaultGuard v1.1</span>
+                    </div>
+                </div>
+            </nav>
+            <!-- Overlay for mobile sidebar -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <main class="main-content flex-grow-1 p-3 p-md-4">
+            <!-- Flash Alert Container -->
+            <div id="alertContainer"></div>
+
+            {% block content %}{% endblock %}
+        </main>
     </div>
-
-    <!-- Main Content -->
-    <main class="container my-4">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-light py-3 mt-5 border-top">
-        <div class="container text-center text-muted small">
-            <p>Password Manager | Keep your passwords safe and secure</p>
-        </div>
-    </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -69,6 +118,10 @@
     <!-- Main App JS -->
     <script src="{{ url_for('static', filename='app.js') }}"></script>
     
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

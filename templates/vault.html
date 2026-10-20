@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}My Passwords - VaultGuard{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="h2 fw-bold font-outfit mb-1">My Passwords</h1>
+        <p class="text-secondary mb-0">Manage and view your securely encrypted credentials.</p>
+    </div>
+    <button class="btn btn-success fw-bold transition-btn shadow-sm" id="openAddModalBtn">
+        <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+        <span>Add Entry</span>
+    </button>
+</div>
+
+<div class="row">
+    <!-- Left: Entries List -->
+    <div class="col-lg-5 col-xl-4 mb-4 mb-lg-0">
+        <div class="card border-0 h-100">
+            <div class="p-3 border-bottom d-flex align-items-center gap-2">
+                <div class="input-group">
+                    <span class="input-group-text border-end-0 bg-transparent text-muted">
+                        <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0 ps-1 py-2" id="searchEntries" placeholder="Search site or username...">
+                </div>
+                <button class="btn btn-icon" id="refreshListBtn" title="Refresh vault list">
+                    <i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            
+            <div class="card-body p-2" style="min-height: 450px;">
+                <div class="vault-entries-list" id="entriesList">
+                    <div class="text-center text-muted p-4">Loading credentials...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right: Entry Details Panel -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="card border-0 h-100" id="detailsCard">
+            <!-- Default Placeholder State -->
+            <div id="detailsPlaceholder" class="card-body d-flex flex-column align-items-center justify-content-center text-center p-5" style="min-height: 450px;">
+                <div class="rounded-circle bg-opacity-5 p-4 mb-3" style="width: 90px; height: 90px; background-color: var(--primary-glow); color: var(--primary-accent); display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="shield" style="width: 48px; height: 48px;"></i>
+                </div>
+                <h4 class="fw-bold font-outfit mb-2">No Entry Selected</h4>
+                <p class="text-secondary small max-width-350 mb-0">Select a password card from the list on the left to decrypt and view username, password, and notes details.</p>
+            </div>
+            
+            <!-- Decrypted Details View State (Initially Hidden) -->
+            <div id="detailsView" class="card-body p-4 p-md-5" style="display: none;">
+                <div class="d-flex align-items-center justify-content-between pb-4 mb-4 border-bottom flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="favicon-badge" id="detailsFavicon" style="width: 54px; height: 54px; font-size: 1.5rem; border-radius: 12px;">G</div>
+                        <div>
+                            <h3 class="fw-bold font-outfit mb-1" id="detailsSite">google.com</h3>
+                            <div class="d-flex align-items-center gap-2 small">
+                                <span class="strength-dot" id="detailsStrengthDot"></span>
+                                <span class="text-secondary" id="detailsStrengthLabel">Strong Password</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger btn-sm rounded-3 fw-bold transition-btn" id="deleteEntryBtn">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        <span>Delete Entry</span>
+                    </button>
+                </div>
+                
+                <div class="row g-4">
+                    <!-- Username Detail -->
+                    <div class="col-12">
+                        <label class="form-label text-secondary text-uppercase small tracking-wider">Username / Email</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace py-2 bg-details-pane border-0" id="detailsUsername" readonly>
+                            <button class="btn btn-primary" type="button" id="copyUsernameBtn" title="Copy username">
+                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Password Detail -->
+                    <div class="col-12">
+                        <label class="form-label text-secondary text-uppercase small tracking-wider">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control font-monospace py-2 bg-details-pane border-0" id="detailsPassword" readonly>
+                            <button class="btn btn-outline-secondary border-0 bg-details-pane" type="button" id="toggleDetailsPasswordBtn" title="Toggle visibility">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn btn-primary" type="button" id="copyPasswordBtn" title="Copy password">
+                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes Detail -->
+                    <div class="col-12" id="detailsNotesContainer">
+                        <label class="form-label text-secondary text-uppercase small tracking-wider">Notes</label>
+                        <div class="bg-details-pane p-3 rounded-3 small text-secondary border-0" style="white-space: pre-wrap; font-size: 0.92rem;" id="detailsNotes"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Entry Modal -->
+<div class="modal fade" id="addEntryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header">
+                <h5 class="modal-title font-outfit fw-bold d-flex align-items-center gap-2">
+                    <i data-lucide="plus-circle" class="text-success" style="width: 22px; height: 22px;"></i>
+                    <span>Add New Password</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEntryForm">
+                    <div class="mb-3">
+                        <label for="addSite" class="form-label">Site/Service</label>
+                        <input type="text" class="form-control" id="addSite" required placeholder="e.g. google.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addUsername" class="form-label">Username/Email</label>
+                        <input type="text" class="form-control" id="addUsername" required placeholder="e.g. name@mail.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="addPassword" class="form-label">Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="addPassword" required placeholder="Type password or generate...">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleAddPasswordBtn">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn btn-primary" type="button" id="genAddPasswordBtn">
+                                <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                                <span>Generate</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addNotes" class="form-label">Notes (optional)</label>
+                        <textarea class="form-control" id="addNotes" rows="3" placeholder="Account recovery answers, pin codes, settings..."></textarea>
+                    </div>
+                    
+                    <div class="modal-footer border-top-0 p-0 pt-3">
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4">Save Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title font-outfit fw-bold text-danger d-flex align-items-center gap-2">
+                    <i data-lucide="alert-triangle" style="width: 22px; height: 22px;"></i>
+                    <span>Confirm Delete</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="mb-1">Delete credentials for</p>
+                <h5 class="fw-bold font-outfit mb-3" id="deleteConfirmSite">site.com</h5>
+                <p class="text-secondary small mb-0">This action is permanent and cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-center">
+                <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger px-3" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let allEntries = [];
+let selectedSite = null;
+let selectedUsername = null;
+let addEntryModal = null;
+let confirmDeleteModal = null;
+
+// Initialize Elements
+document.addEventListener('DOMContentLoaded', () => {
+    addEntryModal = new bootstrap.Modal(document.getElementById('addEntryModal'));
+    confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+    
+    loadEntries();
+    
+    // Bind Event Listeners
+    document.getElementById('openAddModalBtn').addEventListener('click', () => addEntryModal.show());
+    document.getElementById('refreshListBtn').addEventListener('click', loadEntries);
+    document.getElementById('searchEntries').addEventListener('input', function() {
+        filterAndDisplayEntries(this.value);
+    });
+    
+    // Toggle passwords inside modals
+    document.getElementById('toggleAddPasswordBtn').addEventListener('click', function() {
+        const field = document.getElementById('addPassword');
+        const isPassword = field.type === 'password';
+        field.type = isPassword ? 'text' : 'password';
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+            lucide.createIcons();
+        }
+    });
+    
+    // Details pass toggling
+    document.getElementById('toggleDetailsPasswordBtn').addEventListener('click', function() {
+        const field = document.getElementById('detailsPassword');
+        const isPassword = field.type === 'password';
+        field.type = isPassword ? 'text' : 'password';
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+            lucide.createIcons();
+        }
+    });
+
+    // Form submit handlers
+    document.getElementById('addEntryForm').addEventListener('submit', handleAddEntry);
+    document.getElementById('genAddPasswordBtn').addEventListener('click', generatePasswordForAdd);
+    
+    // Copy buttons
+    document.getElementById('copyUsernameBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('detailsUsername'));
+    });
+    document.getElementById('copyPasswordBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('detailsPassword'));
+    });
+    
+    // Delete buttons
+    document.getElementById('deleteEntryBtn').addEventListener('click', () => {
+        document.getElementById('deleteConfirmSite').textContent = selectedSite;
+        confirmDeleteModal.show();
+    });
+    document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteConfirm);
+
+    // Auto-open add modal if query parameter ?add=true is passed
+    if (window.location.search.includes('add=true')) {
+        addEntryModal.show();
+    }
+});
+
+// Load entries list from API
+async function loadEntries() {
+    try {
+        const response = await fetch('/api/vault/list');
+        const data = await response.json();
+        
+        if (response.ok) {
+            allEntries = data.entries;
+            filterAndDisplayEntries(document.getElementById('searchEntries').value);
+        } else {
+            showAlert(data.error || 'Failed to retrieve vault entries', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Filter and display password cards
+function filterAndDisplayEntries(query) {
+    const q = query.toLowerCase().trim();
+    const filtered = allEntries.filter(entry => {
+        return entry.site.toLowerCase().includes(q) || 
+               (entry.username && entry.username.toLowerCase().includes(q));
+    });
+
+    const entriesList = document.getElementById('entriesList');
+    if (filtered.length === 0) {
+        entriesList.innerHTML = `<div class="p-4 text-center text-muted small">${query ? 'No matching passwords.' : 'No passwords stored yet.'}</div>`;
+        return;
+    }
+
+    let html = '';
+    for (const entry of filtered) {
+        // Dot indicator class
+        let strengthColor = 'success';
+        if (entry.strength_score !== null) {
+            if (entry.strength_score <= 2) strengthColor = 'danger';
+            else if (entry.strength_score <= 3) strengthColor = 'warning';
+        } else {
+            strengthColor = 'secondary';
+        }
+        
+        // Single letter favicon fallback badge
+        const firstLetter = entry.site.replace('https://', '').replace('http://', '').replace('www.', '').charAt(0).toUpperCase();
+        
+        const isSelected = selectedSite === entry.site && selectedUsername === entry.username;
+
+        html += `
+            <div class="vault-item-card ${isSelected ? 'selected' : ''}" onclick="selectEntry('${escapeHtml(entry.site)}', '${escapeHtml(entry.username || '')}')">
+                <div class="d-flex align-items-center gap-3 overflow-hidden">
+                    <div class="favicon-badge bg-${getColorHash(entry.site)} text-white">${firstLetter}</div>
+                    <div class="overflow-hidden">
+                        <div class="fw-bold font-outfit text-truncate mb-0" style="font-size: 0.95rem;">${escapeHtml(entry.site)}</div>
+                        <div class="text-secondary small text-truncate" style="font-size: 0.85rem;">${escapeHtml(entry.username || '(no username)')}</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span class="strength-dot ${strengthColor}" title="Password Strength"></span>
+                    <div class="quick-copy-wrapper">
+                        <button class="btn btn-quick-copy btn-sm" onclick="event.stopPropagation(); quickCopyPassword('${escapeHtml(entry.site)}')" title="Quick Copy Password">
+                            <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    entriesList.innerHTML = html;
+    lucide.createIcons();
+}
+
+// Select and decrypt entry details
+async function selectEntry(site, username) {
+    selectedSite = site;
+    selectedUsername = username;
+    
+    // Highlight selected card
+    const cards = document.querySelectorAll('.vault-item-card');
+    cards.forEach(card => card.classList.remove('selected'));
+    
+    // Re-render display list to update selections in DOM
+    filterAndDisplayEntries(document.getElementById('searchEntries').value);
+    
+    try {
+        const response = await fetch(`/api/vault/get/${encodeURIComponent(site)}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            const entry = data.entries.find(e => e.username === username) || data.entries[0];
+            
+            document.getElementById('detailsPlaceholder').style.display = 'none';
+            document.getElementById('detailsView').style.display = 'block';
+            
+            document.getElementById('detailsSite').textContent = site;
+            document.getElementById('detailsUsername').value = entry.username || '';
+            document.getElementById('detailsPassword').value = entry.password;
+            document.getElementById('detailsPassword').type = 'password'; // reset to masked
+            
+            // Notes handling
+            const notesDiv = document.getElementById('detailsNotes');
+            const notesContainer = document.getElementById('detailsNotesContainer');
+            if (entry.notes) {
+                notesDiv.textContent = entry.notes;
+                notesContainer.style.display = 'block';
+            } else {
+                notesContainer.style.display = 'none';
+            }
+            
+            // Set details header badge
+            const firstLetter = site.replace('https://', '').replace('http://', '').replace('www.', '').charAt(0).toUpperCase();
+            const badge = document.getElementById('detailsFavicon');
+            badge.textContent = firstLetter;
+            badge.className = `favicon-badge bg-${getColorHash(site)} text-white`;
+            
+            // Set strength indicator
+            const dot = document.getElementById('detailsStrengthDot');
+            const label = document.getElementById('detailsStrengthLabel');
+            let score = entry.strength_score;
+            
+            let dotClass = 'strength-dot success';
+            let textClass = 'text-success';
+            let textLabel = 'Strong Password';
+            
+            if (score !== null) {
+                if (score <= 2) {
+                    dotClass = 'strength-dot danger';
+                    textClass = 'text-danger';
+                    textLabel = 'Weak Password - Update Recommended';
+                } else if (score <= 3) {
+                    dotClass = 'strength-dot warning';
+                    textClass = 'text-warning';
+                    textLabel = 'Fair Password';
+                }
+            } else {
+                dotClass = 'strength-dot secondary';
+                textClass = 'text-muted';
+                textLabel = 'Unknown Strength';
+            }
+            
+            dot.className = dotClass;
+            label.className = `${textClass} fw-semibold`;
+            label.textContent = textLabel;
+            
+        } else {
+            showAlert(data.error || 'Failed to fetch password details', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error decrypting entry: ' + error.message, 'danger');
+    }
+}
+
+// Add Entry Handler
+async function handleAddEntry(e) {
+    e.preventDefault();
+    const site = document.getElementById('addSite').value;
+    const username = document.getElementById('addUsername').value;
+    const password = document.getElementById('addPassword').value;
+    const notes = document.getElementById('addNotes').value;
+    
+    try {
+        const response = await fetch('/api/vault/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                site: site,
+                username: username,
+                password: password,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Credentials saved successfully!', 'success');
+            addEntryModal.hide();
+            document.getElementById('addEntryForm').reset();
+            
+            // Reset modal eye icons
+            document.getElementById('addPassword').type = 'password';
+            const toggleIcon = document.getElementById('toggleAddPasswordBtn').querySelector('i');
+            if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'eye');
+            
+            loadEntries();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Generate password inside Add Modal
+async function generatePasswordForAdd() {
+    try {
+        const response = await fetch('/api/password/generate?length=16');
+        const data = await response.json();
+        if (response.ok) {
+            const field = document.getElementById('addPassword');
+            field.value = data.password;
+            field.type = 'text'; // Make it visible on generation
+            
+            const toggleIcon = document.getElementById('toggleAddPasswordBtn').querySelector('i');
+            if (toggleIcon) toggleIcon.setAttribute('data-lucide', 'eye-off');
+            lucide.createIcons();
+            
+            showAlert('Generated 16-character strong password.', 'info');
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Secure Quick Copy Password from list card
+async function quickCopyPassword(site) {
+    try {
+        const response = await fetch(`/api/vault/get/${encodeURIComponent(site)}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Use the first username entry matching this site
+            const entry = data.entries[0];
+            if (entry && entry.password) {
+                navigator.clipboard.writeText(entry.password).then(() => {
+                    showAlert(`Copied password for ${site}!`, 'success');
+                }).catch(() => {
+                    showAlert('Copy failed.', 'danger');
+                });
+            }
+        } else {
+            showAlert(data.error || 'Failed to retrieve password for quick-copy.', 'danger');
+        }
+    } catch (error) {
+        console.error("Quick copy failed:", error);
+    }
+}
+
+// Confirm Entry Deletion
+async function handleDeleteConfirm() {
+    try {
+        const response = await fetch(`/api/vault/delete/${encodeURIComponent(selectedSite)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: selectedUsername })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Credentials deleted successfully.', 'success');
+            confirmDeleteModal.hide();
+            
+            // Reset Details panel to placeholder state
+            document.getElementById('detailsView').style.display = 'none';
+            document.getElementById('detailsPlaceholder').style.display = 'flex';
+            
+            selectedSite = null;
+            selectedUsername = null;
+            
+            loadEntries();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error deleting entry: ' + error.message, 'danger');
+    }
+}
+
+// Helper: Generates a color hash based on string value
+function getColorHash(str) {
+    const colors = ['primary', 'success', 'warning', 'danger', 'info', 'secondary'];
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+}
+</script>
+{% endblock %}

@@ -1,47 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Password Manager - Home{% endblock %}
+{% block title %}Unlock Vault - VaultGuard{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
+<div class="row justify-content-center align-items-center min-vh-75 py-5">
+    <div class="col-md-6 col-lg-5">
         {% if vault_exists %}
             <!-- Unlock Vault Form -->
-            <div class="card shadow border-0 rounded-4">
-                <div class="card-body p-5">
-                    <h2 class="card-title text-center mb-4 font-outfit fw-bold" id="unlockTitle">🔓 Unlock Vault</h2>
+            <div class="card border-0 shadow rounded-4 p-2 p-md-3">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-opacity-10 rounded-circle p-3 mb-3" id="unlockIconBg" style="width: 70px; height: 70px; background-color: var(--primary-glow);">
+                            <i data-lucide="lock" class="text-primary-accent" id="unlockIcon" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <h2 class="card-title fw-bold font-outfit" id="unlockTitle">Unlock Vault</h2>
+                        <p class="text-secondary small" id="unlockSub">Access your encrypted credentials.</p>
+                    </div>
+
                     <form id="unlockForm">
                         <div class="mb-3">
-                            <label for="masterPassword" class="form-label fw-semibold" id="passwordLabel">Master Password</label>
-                            <input type="password" class="form-control rounded-3 py-2" id="masterPassword" name="master_password" required>
-                            <small class="form-text text-muted" id="passwordHelp">Enter your master password to access your vault.</small>
+                            <label for="masterPassword" class="form-label" id="passwordLabel">Master Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control rounded-start-3" id="masterPassword" name="master_password" required placeholder="Enter key...">
+                                <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePasswordVisibilityBtn">
+                                    <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2" id="passwordHelp">Your master password decrypts the entire database.</small>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold mb-3 transition-btn" id="unlockSubmitBtn">Unlock</button>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold mb-4 transition-btn" id="unlockSubmitBtn">
+                            <span>Unlock Vault</span>
+                            <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                        </button>
+                        
                         <div class="text-center">
-                            <a href="#" class="text-decoration-none small text-danger fw-semibold" id="toggleRecoveryLink">Lost your master password? Unlock with Recovery Password</a>
+                            <a href="#" class="small text-danger fw-semibold" id="toggleRecoveryLink">Lost your master password? Unlock with Recovery Password</a>
                         </div>
                     </form>
                 </div>
             </div>
         {% else %}
             <!-- Initialize Vault Form -->
-            <div class="card shadow border-0 rounded-4">
-                <div class="card-body p-5">
-                    <h2 class="card-title text-center mb-4 font-outfit fw-bold">🆕 Create New Vault</h2>
-                    <p class="text-center text-muted mb-4">
-                        Set up a new password vault. Choose a strong master password — it cannot be recovered if lost.
+            <div class="card border-0 shadow rounded-4 p-2 p-md-3">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-opacity-10 bg-success rounded-circle p-3 mb-3" style="width: 70px; height: 70px; background-color: var(--success-glow);">
+                            <i data-lucide="shield-plus" class="text-success" style="width: 32px; height: 32px;"></i>
+                        </div>
+                        <h2 class="card-title fw-bold font-outfit">Create New Vault</h2>
+                        <p class="text-secondary small">Set up your secure encrypted credentials storage.</p>
+                    </div>
+                    
+                    <p class="text-secondary text-center small mb-4">
+                        Choose a strong master password. It encrypts your database on disk and cannot be recovered if forgotten.
                     </p>
+                    
                     <form id="initForm">
                         <div class="mb-3">
-                            <label for="masterPassword" class="form-label fw-semibold">Master Password</label>
-                            <input type="password" class="form-control rounded-3 py-2" id="masterPassword" name="master_password" required minlength="8">
+                            <label for="masterPassword" class="form-label">Master Password</label>
+                            <input type="password" class="form-control rounded-3" id="masterPassword" name="master_password" required minlength="8" placeholder="Choose a strong password...">
                             <small class="form-text text-muted">Use at least 8 characters. 12+ recommended.</small>
                         </div>
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label fw-semibold">Confirm Master Password</label>
-                            <input type="password" class="form-control rounded-3 py-2" id="confirmPassword" name="confirm_password" required>
+                        <div class="mb-4">
+                            <label for="confirmPassword" class="form-label">Confirm Master Password</label>
+                            <input type="password" class="form-control rounded-3" id="confirmPassword" name="confirm_password" required placeholder="Retype password...">
                         </div>
-                        <button type="submit" class="btn btn-success w-100 py-2 rounded-3 fw-bold transition-btn">Create Vault</button>
+                        <button type="submit" class="btn btn-success w-100 py-3 rounded-3 fw-bold transition-btn">
+                            <span>Create Secure Vault</span>
+                            <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -56,6 +84,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const initForm = document.getElementById('initForm');
     const unlockForm = document.getElementById('unlockForm');
     
+    // Toggle Password Visibility in Unlock Form
+    const toggleVisibleBtn = document.getElementById('togglePasswordVisibilityBtn');
+    const masterPasswordInput = document.getElementById('masterPassword');
+    if (toggleVisibleBtn && masterPasswordInput) {
+        toggleVisibleBtn.addEventListener('click', function() {
+            const isPassword = masterPasswordInput.type === 'password';
+            masterPasswordInput.type = isPassword ? 'text' : 'password';
+            const icon = toggleVisibleBtn.querySelector('i');
+            if (icon) {
+                icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+                lucide.createIcons();
+            }
+        });
+    }
+
     if (initForm) {
         initForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -90,42 +133,58 @@ document.addEventListener('DOMContentLoaded', function() {
         let useRecovery = false;
         const toggleRecoveryLink = document.getElementById('toggleRecoveryLink');
         const unlockTitle = document.getElementById('unlockTitle');
+        const unlockSub = document.getElementById('unlockSub');
         const passwordLabel = document.getElementById('passwordLabel');
         const passwordHelp = document.getElementById('passwordHelp');
         const unlockSubmitBtn = document.getElementById('unlockSubmitBtn');
-
+        const unlockIcon = document.getElementById('unlockIcon');
+        const unlockIconBg = document.getElementById('unlockIconBg');
+        const passwordInput = document.getElementById('masterPassword');
+ 
         if (toggleRecoveryLink) {
             toggleRecoveryLink.addEventListener('click', function(e) {
                 e.preventDefault();
                 useRecovery = !useRecovery;
                 if (useRecovery) {
-                    unlockTitle.textContent = '🛡️ Unlock with Recovery';
+                    unlockTitle.textContent = 'Unlock with Recovery';
+                    unlockSub.textContent = 'Unlock using your recovery passphrase.';
                     passwordLabel.textContent = 'Recovery Password';
-                    passwordHelp.textContent = 'Enter your recovery password to unlock your vault.';
-                    unlockSubmitBtn.textContent = 'Unlock with Recovery';
-                    unlockSubmitBtn.className = 'btn btn-danger w-100 py-2 rounded-3 fw-bold mb-3 transition-btn';
+                    passwordHelp.textContent = 'Enter your secondary recovery password.';
+                    unlockSubmitBtn.querySelector('span').textContent = 'Unlock with Recovery';
+                    unlockSubmitBtn.className = 'btn btn-danger w-100 py-3 rounded-3 fw-bold mb-4 transition-btn';
                     toggleRecoveryLink.textContent = 'Back to Master Password login';
+                    
+                    unlockIcon.setAttribute('data-lucide', 'shield-alert');
+                    unlockIconBg.style.backgroundColor = 'var(--danger-glow)';
+                    unlockIcon.className = 'text-danger';
                 } else {
-                    unlockTitle.textContent = '🔓 Unlock Vault';
+                    unlockTitle.textContent = 'Unlock Vault';
+                    unlockSub.textContent = 'Access your encrypted credentials.';
                     passwordLabel.textContent = 'Master Password';
-                    passwordHelp.textContent = 'Enter your master password to access your vault.';
-                    unlockSubmitBtn.textContent = 'Unlock';
-                    unlockSubmitBtn.className = 'btn btn-primary w-100 py-2 rounded-3 fw-bold mb-3 transition-btn';
+                    passwordHelp.textContent = 'Your master password decrypts the entire database.';
+                    unlockSubmitBtn.querySelector('span').textContent = 'Unlock Vault';
+                    unlockSubmitBtn.className = 'btn btn-primary w-100 py-3 rounded-3 fw-bold mb-4 transition-btn';
                     toggleRecoveryLink.textContent = 'Lost your master password? Unlock with Recovery Password';
+                    
+                    unlockIcon.setAttribute('data-lucide', 'lock');
+                    unlockIconBg.style.backgroundColor = 'var(--primary-glow)';
+                    unlockIcon.className = 'text-primary-accent';
                 }
+                passwordInput.value = '';
+                lucide.createIcons();
             });
         }
 
         unlockForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const masterPassword = document.getElementById('masterPassword').value;
+            const password = passwordInput.value;
             
             try {
                 const response = await fetch('/api/unlock', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        master_password: masterPassword,
+                        master_password: password,
                         use_recovery: useRecovery
                     })
                 });

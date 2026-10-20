@@ -144,6 +144,22 @@ def dashboard():
     return render_template('dashboard.html')
 
 
+@app.route('/vault')
+def vault_page():
+    """Vault page (requires authentication)."""
+    if 'master_password' not in session:
+        return redirect(url_for('index'))
+    return render_template('vault.html')
+
+
+@app.route('/generator')
+def generator_page():
+    """Generator & Analyzer page (requires authentication)."""
+    if 'master_password' not in session:
+        return redirect(url_for('index'))
+    return render_template('generator.html')
+
+
 # ============================================================================
 # Routes: Vault Management
 # ============================================================================

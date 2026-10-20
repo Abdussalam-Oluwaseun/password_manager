@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}Password Generator - VaultGuard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="h2 fw-bold font-outfit mb-1">Generator & Analyzer</h1>
+    <p class="text-secondary mb-0">Create cryptographically strong passwords or audit existing ones.</p>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs mb-4" id="generatorTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="password-tab" data-bs-toggle="tab" href="#password-gen" role="tab" aria-controls="password-gen" aria-selected="true">
+            <div class="d-flex align-items-center gap-2">
+                <i data-lucide="key-round" style="width: 18px; height: 18px;"></i>
+                <span>Password Generator</span>
+            </div>
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="passphrase-tab" data-bs-toggle="tab" href="#passphrase-gen" role="tab" aria-controls="passphrase-gen" aria-selected="false">
+            <div class="d-flex align-items-center gap-2">
+                <i data-lucide="message-square-plus" style="width: 18px; height: 18px;"></i>
+                <span>Passphrase Generator</span>
+            </div>
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="analyzer-tab" data-bs-toggle="tab" href="#strength-analyzer" role="tab" aria-controls="strength-analyzer" aria-selected="false">
+            <div class="d-flex align-items-center gap-2">
+                <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
+                <span>Strength Analyzer</span>
+            </div>
+        </a>
+    </li>
+</ul>
+
+<!-- Tabs Content -->
+<div class="tab-content" id="generatorTabsContent">
+    <!-- Password Generator Tab -->
+    <div class="tab-pane fade show active" id="password-gen" role="tabpanel" aria-labelledby="password-tab">
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <div class="card border-0 h-100">
+                    <div class="card-body p-4 p-md-5">
+                        <h4 class="fw-bold font-outfit mb-4">Configure Password</h4>
+                        
+                        <div class="mb-4">
+                            <label for="pwLength" class="form-label d-flex justify-content-between">
+                                <span>Length</span>
+                                <span class="fw-bold text-primary-accent" id="pwLengthDisplay">16</span>
+                            </label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="pwLength" min="4" max="128" value="16" style="flex-grow: 1;">
+                                <input type="number" class="form-control text-center" id="pwLengthValue" value="16" min="4" max="128" style="width: 70px;">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pwUpper" checked>
+                                    <label class="form-check-label" for="pwUpper">Uppercase (A-Z)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pwLower" checked>
+                                    <label class="form-check-label" for="pwLower">Lowercase (a-z)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pwDigits" checked>
+                                    <label class="form-check-label" for="pwDigits">Digits (0-9)</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pwSymbols" checked>
+                                    <label class="form-check-label" for="pwSymbols">Symbols (!@#$...)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="pwAmbiguous">
+                                    <label class="form-check-label" for="pwAmbiguous">Exclude ambiguous (I, l, 1, O, 0)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary w-100 py-3 rounded-3 fw-bold transition-btn shadow-sm" id="generatePwBtn">
+                            <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                            <span>Generate Password</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Output Side -->
+            <div class="col-lg-5 mb-4">
+                <div class="card border-0 h-100 justify-content-center text-center p-4" id="passwordResultCard">
+                    <!-- Un-generated State -->
+                    <div id="pwPlaceholder" class="p-4">
+                        <i data-lucide="key" class="text-secondary opacity-25 mb-3" style="width: 60px; height: 60px;"></i>
+                        <p class="text-secondary small mb-0">Adjust configuration settings on the left, then click Generate to create a strong secure password.</p>
+                    </div>
+                    
+                    <!-- Generated Result State (Initially Hidden) -->
+                    <div id="pwResult" style="display: none;" class="p-3">
+                        <h5 class="fw-bold font-outfit mb-3 text-secondary">Generated Password</h5>
+                        
+                        <div class="input-group mb-4">
+                            <input type="text" class="form-control font-monospace text-center py-3 fs-5" id="generatedPassword" readonly>
+                            <button class="btn btn-primary px-3" type="button" id="copyPwBtn" title="Copy to clipboard">
+                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="card bg-opacity-5 p-3 mb-4 text-start border" id="pwStrengthBadge">
+                            <!-- Populated dynamically by app.js / generate callback -->
+                            <div id="pwStrength"></div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-success w-100 py-3 rounded-3 fw-bold transition-btn shadow-sm" id="savePwBtn">
+                            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                            <span>Save Securely to Vault</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Passphrase Generator Tab -->
+    <div class="tab-pane fade" id="passphrase-gen" role="tabpanel" aria-labelledby="passphrase-tab">
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <div class="card border-0 h-100">
+                    <div class="card-body p-4 p-md-5">
+                        <h4 class="fw-bold font-outfit mb-4">Configure Passphrase</h4>
+                        
+                        <div class="mb-4">
+                            <label for="phraseWords" class="form-label">Number of Words</label>
+                            <input type="number" class="form-control py-2" id="phraseWords" min="3" max="10" value="4">
+                            <small class="form-text text-muted">A larger number of words makes the phrase harder to crack but more memorable than random strings.</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="phraseSeparator" class="form-label">Separator Character</label>
+                            <input type="text" class="form-control py-2" id="phraseSeparator" value="-">
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary w-100 py-3 rounded-3 fw-bold transition-btn shadow-sm" id="generatePhraseBtn">
+                            <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                            <span>Generate Passphrase</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Output Side -->
+            <div class="col-lg-5 mb-4">
+                <div class="card border-0 h-100 justify-content-center text-center p-4">
+                    <!-- Un-generated State -->
+                    <div id="phrasePlaceholder" class="p-4">
+                        <i data-lucide="message-square" class="text-secondary opacity-25 mb-3" style="width: 60px; height: 60px;"></i>
+                        <p class="text-secondary small mb-0">Create easy-to-remember but highly secure passphrases using dictionary word matching.</p>
+                    </div>
+                    
+                    <!-- Generated Result State (Initially Hidden) -->
+                    <div id="phraseResult" style="display: none;" class="p-3">
+                        <h5 class="fw-bold font-outfit mb-3 text-secondary">Generated Passphrase</h5>
+                        
+                        <div class="input-group mb-4">
+                            <input type="text" class="form-control font-monospace text-center py-3 fs-5" id="generatedPhrase" readonly>
+                            <button class="btn btn-primary px-3" type="button" id="copyPhraseBtn" title="Copy to clipboard">
+                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="card bg-opacity-5 p-3 text-start border" id="phraseStrengthBadge">
+                            <div id="phraseStrength"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Strength Analyzer Tab -->
+    <div class="tab-pane fade" id="strength-analyzer" role="tabpanel" aria-labelledby="analyzer-tab">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 p-4 p-md-5">
+                    <h4 class="fw-bold font-outfit mb-3 text-center">Auditor Tool</h4>
+                    <p class="text-secondary text-center small mb-4">Check how secure a password is and review warnings from common dictionaries or patterns.</p>
+                    
+                    <div class="mb-4">
+                        <label for="checkPassword" class="form-label">Password to Analyze</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i data-lucide="fingerprint" style="width: 20px; height: 20px;"></i>
+                            </span>
+                            <input type="password" class="form-control border-start-0 ps-1 py-3 font-monospace fs-5" id="checkPassword" placeholder="Enter password to test...">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleCheckPasswordBtn">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="checkResult" class="card border bg-opacity-5 p-4" style="display: none;">
+                        <!-- Dynamically filled details -->
+                        <div id="checkFeedbackPanel"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Generated Password Modal -->
+<div class="modal fade" id="saveGenPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header">
+                <h5 class="modal-title font-outfit fw-bold d-flex align-items-center gap-2">
+                    <i data-lucide="plus-circle" class="text-primary-accent" style="width: 22px; height: 22px;"></i>
+                    <span>Save Generated Password</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saveGenPasswordForm">
+                    <div class="mb-3">
+                        <label for="saveGenSite" class="form-label">Site/Service</label>
+                        <input type="text" class="form-control" id="saveGenSite" required placeholder="e.g. facebook.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saveGenUsername" class="form-label">Username/Email</label>
+                        <input type="text" class="form-control" id="saveGenUsername" required placeholder="e.g. name@mail.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saveGenNotes" class="form-label">Notes (optional)</label>
+                        <textarea class="form-control" id="saveGenNotes" rows="2" placeholder="Account numbers, PIN codes, details..."></textarea>
+                    </div>
+                    
+                    <div class="modal-footer border-top-0 p-0 pt-3">
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary px-4" id="confirmSaveGenPasswordBtn">Save to Vault</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// State
+let savedGeneratedPassword = null;
+let saveModal = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    saveModal = new bootstrap.Modal(document.getElementById('saveGenPasswordModal'));
+    
+    // Sliders
+    const lengthRange = document.getElementById('pwLength');
+    const lengthNum = document.getElementById('pwLengthValue');
+    const lengthDisp = document.getElementById('pwLengthDisplay');
+    
+    lengthRange.addEventListener('input', function() {
+        lengthNum.value = this.value;
+        lengthDisp.textContent = this.value;
+    });
+    lengthNum.addEventListener('change', function() {
+        lengthRange.value = this.value;
+        lengthDisp.textContent = this.value;
+    });
+    
+    // Generate PW callback
+    document.getElementById('generatePwBtn').addEventListener('click', generatePassword);
+    document.getElementById('copyPwBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('generatedPassword'));
+    });
+    
+    // Save generated PW
+    document.getElementById('savePwBtn').addEventListener('click', () => saveModal.show());
+    document.getElementById('confirmSaveGenPasswordBtn').addEventListener('click', confirmSaveGenerated);
+    
+    // Generate Passphrase callback
+    document.getElementById('generatePhraseBtn').addEventListener('click', generatePassphrase);
+    document.getElementById('copyPhraseBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('generatedPhrase'));
+    });
+    
+    // Checker toggling
+    document.getElementById('toggleCheckPasswordBtn').addEventListener('click', function() {
+        const field = document.getElementById('checkPassword');
+        const isPassword = field.type === 'password';
+        field.type = isPassword ? 'text' : 'password';
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+            lucide.createIcons();
+        }
+    });
+    
+    // Check Strength callback on input
+    document.getElementById('checkPassword').addEventListener('input', checkPasswordStrength);
+
+    // Auto-switch tabs if request tab query is provided
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'analyzer') {
+        const tabEl = document.querySelector('#analyzer-tab');
+        if (tabEl) {
+            const bootstrapTab = new bootstrap.Tab(tabEl);
+            bootstrapTab.show();
+        }
+    }
+});
+
+// Generate character-based password
+async function generatePassword() {
+    const length = parseInt(document.getElementById('pwLength').value);
+    const useUpper = document.getElementById('pwUpper').checked;
+    const useLower = document.getElementById('pwLower').checked;
+    const useDigits = document.getElementById('pwDigits').checked;
+    const useSymbols = document.getElementById('pwSymbols').checked;
+    const excludeAmbiguous = document.getElementById('pwAmbiguous').checked;
+    
+    try {
+        const response = await fetch(`/api/password/generate?length=${length}&use_upper=${useUpper}&use_lower=${useLower}&use_digits=${useDigits}&use_symbols=${useSymbols}&exclude_ambiguous=${excludeAmbiguous}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('pwPlaceholder').style.display = 'none';
+            document.getElementById('pwResult').style.display = 'block';
+            
+            document.getElementById('generatedPassword').value = data.password;
+            savedGeneratedPassword = data.password;
+            
+            displayStrength(data.strength, 'pwStrength');
+            
+            // Adjust card visual glow based on strength
+            const label = data.strength.label || 'Fair';
+            const card = document.getElementById('passwordResultCard');
+            card.style.borderColor = `var(--${getBadgeColorName(label)}-accent)`;
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Confirm Save Generated Password to database
+async function confirmSaveGenerated() {
+    const site = document.getElementById('saveGenSite').value.trim();
+    const username = document.getElementById('saveGenUsername').value.trim();
+    const notes = document.getElementById('saveGenNotes').value.trim();
+    
+    if (!site || !username) {
+        showAlert('Site/Service and Username are required fields!', 'danger');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/vault/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                site: site,
+                username: username,
+                password: savedGeneratedPassword,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showAlert('Password successfully saved in vault!', 'success');
+            saveModal.hide();
+            document.getElementById('saveGenPasswordForm').reset();
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error saving entry: ' + error.message, 'danger');
+    }
+}
+
+// Generate dictionary passphrase
+async function generatePassphrase() {
+    const numWords = parseInt(document.getElementById('phraseWords').value);
+    const separator = document.getElementById('phraseSeparator').value;
+    
+    try {
+        const response = await fetch(`/api/password/passphrase?num_words=${numWords}&separator=${encodeURIComponent(separator)}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('phrasePlaceholder').style.display = 'none';
+            document.getElementById('phraseResult').style.display = 'block';
+            
+            document.getElementById('generatedPhrase').value = data.passphrase;
+            displayStrength(data.strength, 'phraseStrength');
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+    }
+}
+
+// Strength Analyzer Logic
+async function checkPasswordStrength() {
+    const password = this.value;
+    const resultDiv = document.getElementById('checkResult');
+    
+    if (!password) {
+        resultDiv.style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/password/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            resultDiv.style.display = 'block';
+            
+            const percentage = (data.score / data.max_score) * 100;
+            const label = data.label || 'Unknown';
+            const colorClass = getStrengthClass(label);
+            
+            let feedbackHtml = `
+                <h5 class="fw-bold font-outfit mb-3">Audit Results</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><strong>Overall Rating:</strong> <span class="badge ${colorClass} text-white">${label}</span></span>
+                    <span class="small text-secondary">~${Math.round(data.entropy_bits || 0)} bits of entropy</span>
+                </div>
+                
+                <div class="progress mb-4" style="height: 10px;">
+                    <div class="progress-bar ${colorClass}" role="progressbar" style="width: ${percentage}%"></div>
+                </div>
+            `;
+            
+            if (data.feedback && data.feedback.length > 0) {
+                feedbackHtml += `
+                    <div class="mt-2">
+                        <label class="form-label text-secondary text-uppercase small tracking-wider">Warnings & Feedback</label>
+                        <div class="d-flex flex-column gap-2">
+                `;
+                data.feedback.forEach(f => {
+                    feedbackHtml += `
+                        <div class="d-flex align-items-start gap-2 small text-secondary">
+                            <i data-lucide="info" class="text-warning-accent flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                            <span>${escapeHtml(f)}</span>
+                        </div>
+                    `;
+                });
+                feedbackHtml += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                feedbackHtml += `
+                    <div class="d-flex align-items-center gap-2 text-success small">
+                        <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
+                        <strong>No weaknesses detected! Great password.</strong>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('checkFeedbackPanel').innerHTML = feedbackHtml;
+            lucide.createIcons();
+        }
+    } catch (error) {
+        console.error("Strength check failed:", error);
+    }
+}
+
+// Helpers
+function getBadgeColorName(label) {
+    const maps = {
+        'Very Weak': 'danger',
+        'Weak': 'warning',
+        'Fair': 'info',
+        'Good': 'primary',
+        'Strong': 'success',
+        'Very Strong': 'success',
+        'Excellent': 'success'
+    };
+    return maps[label] || 'secondary';
+}
+</script>
+{% endblock %}
